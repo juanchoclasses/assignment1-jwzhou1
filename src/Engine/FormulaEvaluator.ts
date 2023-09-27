@@ -1,11 +1,8 @@
-import Cell from "./Cell"
-import SheetMemory from "./SheetMemory"
+import SheetMemory from "./SheetMemory";
+import Cell from "./Cell";
 import { ErrorMessages } from "./GlobalDefinitions";
 
-
-
 export class FormulaEvaluator {
-  // Define a function called update that takes a string parameter and returns a number
   private _errorOccured: boolean = false;
   private _errorMessage: string = "";
   private _currentFormula: FormulaType = [];
@@ -13,137 +10,168 @@ export class FormulaEvaluator {
   private _sheetMemory: SheetMemory;
   private _result: number = 0;
 
-
   constructor(memory: SheetMemory) {
     this._sheetMemory = memory;
   }
 
-  /**
-    * place holder for the evaluator.   I am not sure what the type of the formula is yet 
-    * I do know that there will be a list of tokens so i will return the length of the array
-    * 
-    * I also need to test the error display in the front end so i will set the error message to
-    * the error messages found In GlobalDefinitions.ts
-    * 
-    * according to this formula.
-    * 
-    7 tokens partial: "#ERR",
-    8 tokens divideByZero: "#DIV/0!",
-    9 tokens invalidCell: "#REF!",
-  10 tokens invalidFormula: "#ERR",
-  11 tokens invalidNumber: "#ERR",
-  12 tokens invalidOperator: "#ERR",
-  13 missingParentheses: "#ERR",
-  0 tokens emptyFormula: "#EMPTY!",
-
-                    When i get back from my quest to save the world from the evil thing i will fix.
-                      (if you are in a hurry you can fix it yourself)
-                               Sincerely 
-                               Bilbo
-    * 
-   */
-
   evaluate(formula: FormulaType) {
+    this._currentFormula = [...formula];
+    this._lastResult = 0;
 
+    if (formula.length === 0) {
+      this._errorMessage = ErrorMessages.emptyFormula;
+      this._result = 0;
+      return;
+    }
 
-    // set the this._result to the length of the formula
-
-    this._result = formula.length;
+    this._errorOccured = false;
     this._errorMessage = "";
 
-    switch (formula.length) {
-      case 0:
-        this._errorMessage = ErrorMessages.emptyFormula;
-        break;
-      case 7:
-        this._errorMessage = ErrorMessages.partial;
-        break;
-      case 8:
-        this._errorMessage = ErrorMessages.divideByZero;
-        break;
-      case 9:
-        this._errorMessage = ErrorMessages.invalidCell;
-        break;
-      case 10:
-        this._errorMessage = ErrorMessages.invalidFormula;
-        break;
-      case 11:
-        this._errorMessage = ErrorMessages.invalidNumber;
-        break;
-      case 12:
-        this._errorMessage = ErrorMessages.invalidOperator;
-        break;
-      case 13:
-        this._errorMessage = ErrorMessages.missingParentheses;
-        break;
-      default:
-        this._errorMessage = "";
-        break;
+    const resultValue = this.expression();
+    this._result = resultValue;
+
+    if (this._currentFormula.length > 0 && !this._errorOccured) {
+      this._errorOccured = true;
+      this._errorMessage = ErrorMessages.invalidFormula;
+    }
+
+    if (this._errorOccured) {
+      this._result = this._lastResult;
     }
   }
 
   public get error(): string {
-    return this._errorMessage
+    return this._errorMessage;
   }
 
   public get result(): number {
     return this._result;
   }
 
+  private expression(): number {
+    if (this._errorOccured) {
+      return this._lastResult;
+    }
+    let result = this.term();
+    while (
+      this._currentFormula.length > 0 &&
+      (this._currentFormula[0] === "+" || this._currentFormula[0] === "-")
+    ) {
+      const operator = this._currentFormula.shift();
+      const term = this.term();
+      if (operator === "+") {
+        result += term;
+      } else if (operator === "-") {
+        result -= term;
+      }
+    }
+    this._lastResult = result;
+    return result;
+  }
 
+  private allowedOperator(): boolean {
+    return (
+      this._currentFormula[0] === "*" ||
+      this._currentFormula[0] === "/" ||
+      this._currentFormula[0] === "+/-"
+    );
+  }
 
+  private term(): number {
+    if (this._errorOccured) {
+      return this._lastResult;
+    }
+    let result = this.factor();
+    while (this._currentFormula.length > 0 && this.allowedOperator()) {
+      const operator = this._currentFormula.shift();
+      if (operator === "+/-") {
+        if (result !== 0) {
+          result = -result;
+        }
+      } else {
+        const factor = this.factor();
+        if (operator === "*") {
+          result *= factor;
+        } else if (operator === "/") {
+          if (factor === 0) {
+            this._errorOccured = true;
+            this._errorMessage = ErrorMessages.divideByZero;
+            this._lastResult = Infinity;
+            return Infinity;
+          } else {
+            result /= factor;
+          }
+        }
+      }
+    }
+    this._lastResult = result;
+    return result;
+  }
+  
+  private factor(): number {
+    if (this._errorOccured) {
+      return this._lastResult;
+    }
+    let result = 0;
+    if (this._currentFormula.length === 0) {
+      this._errorOccured = true;
+      this._errorMessage = ErrorMessages.partial;
+      return result;
+    }
+    let token = this._currentFormula.shift();
+    if (token === "") {
+      this._errorOccured = true;
+      this._errorMessage = ErrorMessages.invalidFormula;
+      return result;
+    }
+    if (this.isNumber(token)) {
+      result = Number(token);
+      this._lastResult = result;
+    } else if (token === "(") {
+      result = this.expression();
+      if (
+        this._currentFormula.length === 0 ||
+        this._currentFormula.shift() !== ")"
+      ) {
+        this._errorOccured = true;
+        this._errorMessage = ErrorMessages.missingParentheses;
+        this._lastResult = result;
+      }
+    } else if (this.isCellReference(token)) {
+      [result, this._errorMessage] = this.getCellValue(token);
+      if (this._errorMessage !== "") {
+        this._errorOccured = true;
+        this._lastResult = result;
+      }
+    } else {
+      this._errorOccured = true;
+      this._errorMessage = ErrorMessages.invalidFormula;
+    }
+    return result;
+  }
 
-  /**
-   * 
-   * @param token 
-   * @returns true if the toke can be parsed to a number
-   */
   isNumber(token: TokenType): boolean {
     return !isNaN(Number(token));
   }
 
-  /**
-   * 
-   * @param token
-   * @returns true if the token is a cell reference
-   * 
-   */
   isCellReference(token: TokenType): boolean {
-
     return Cell.isValidCellLabel(token);
   }
 
-  /**
-   * 
-   * @param token
-   * @returns [value, ""] if the cell formula is not empty and has no error
-   * @returns [0, error] if the cell has an error
-   * @returns [0, ErrorMessages.invalidCell] if the cell formula is empty
-   * 
-   */
   getCellValue(token: TokenType): [number, string] {
-
-    let cell = this._sheetMemory.getCellByLabel(token);
-    let formula = cell.getFormula();
-    let error = cell.getError();
-
-    // if the cell has an error return 0
-    if (error !== "" && error !== ErrorMessages.emptyFormula) {
-      return [0, error];
-    }
-
-    // if the cell formula is empty return 0
-    if (formula.length === 0) {
+    if (token === "") {
       return [0, ErrorMessages.invalidCell];
+    } else {
+      let cell = this._sheetMemory.getCellByLabel(token);
+      let cellValue = cell.getValue();
+      let cellError = cell.getError();
+      if (cellError !== "") {
+        return [0, cellError];
+      } else {
+        return [cellValue, ""];
+      }
     }
-
-
-    let value = cell.getValue();
-    return [value, ""];
-
   }
-
-
 }
 
 export default FormulaEvaluator;
