@@ -1,3 +1,10 @@
+// FormulaEvaluator class is responsible for evaluating mathematical formulas
+// expressed as arrays of tokens. It provides methods for parsing and calculating
+// the result of these formulas while handling various error conditions.
+// It relies on the SheetMemory class for accessing cell values and error messages.
+// The class maintains state, error flags, and the last calculated result.
+// It can be used to evaluate mathematical expressions in spreadsheet cells.
+
 import SheetMemory from "./SheetMemory";
 import Cell from "./Cell";
 import { ErrorMessages } from "./GlobalDefinitions";
@@ -14,6 +21,9 @@ export class FormulaEvaluator {
     this._sheetMemory = memory;
   }
 
+  // The evaluate method is the entry point for formula evaluation.
+  // It sets initial values, handles empty formula cases, and calls
+  // the expression method to evaluate the formula.
   evaluate(formula: FormulaType) {
     this._currentFormula = [...formula];
     this._lastResult = 0;
@@ -40,14 +50,18 @@ export class FormulaEvaluator {
     }
   }
 
+  // Getters to retrieve the error message.
   public get error(): string {
     return this._errorMessage;
   }
 
+  // Getters to retrieve the final result.
   public get result(): number {
     return this._result;
   }
 
+  // The expression method evaluates expressions containing addition and subtraction.
+  // It calls the term method to evaluate terms containing multiplication and division.
   private expression(): number {
     if (this._errorOccured) {
       return this._lastResult;
@@ -69,6 +83,8 @@ export class FormulaEvaluator {
     return result;
   }
 
+  // The allowedOperator method checks if the current token is an allowed operator.
+  // Allowed operators are multiplication, division, and change of sign.
   private allowedOperator(): boolean {
     return (
       this._currentFormula[0] === "*" ||
@@ -77,6 +93,8 @@ export class FormulaEvaluator {
     );
   }
 
+   // The term method evaluates terms containing multiplication, division, and sign changes.
+    // It calls the factor method to evaluate factors containing numbers, cell references,
   private term(): number {
     if (this._errorOccured) {
       return this._lastResult;
@@ -108,6 +126,8 @@ export class FormulaEvaluator {
     return result;
   }
   
+  // The factor method evaluates factors, which can be numbers, parentheses, or cell references.
+  // It calls the expression method to evaluate expressions in parentheses.
   private factor(): number {
     if (this._errorOccured) {
       return this._lastResult;
@@ -150,14 +170,33 @@ export class FormulaEvaluator {
     return result;
   }
 
+  /**
+   * 
+   * @param token 
+   * @returns true if the toke can be parsed to a number
+   */
   isNumber(token: TokenType): boolean {
     return !isNaN(Number(token));
   }
 
+   /**
+   * 
+   * @param token
+   * @returns true if the token is a cell reference
+   * 
+   */
   isCellReference(token: TokenType): boolean {
     return Cell.isValidCellLabel(token);
   }
 
+   /**
+   * 
+   * @param token
+   * @returns [value, ""] if the cell formula is not empty and has no error
+   * @returns [0, error] if the cell has an error
+   * @returns [0, ErrorMessages.invalidCell] if the cell formula is empty
+   * 
+   */
   getCellValue(token: TokenType): [number, string] {
     if (token === "") {
       return [0, ErrorMessages.invalidCell];
