@@ -83,7 +83,7 @@ function SpreadSheet({ documentName }: SpreadSheetProps) {
    */
   async function onCommandButtonClick(text: string): Promise<void> {
     if (!userName) {
-      alert("Please enter your name!");
+      alert("Please enter your name to login first!");
       return; // Prevent further processing if the user hasn't entered a name
     }
 
@@ -120,7 +120,7 @@ function SpreadSheet({ documentName }: SpreadSheetProps) {
    * */
   function onButtonClick(event: React.MouseEvent<HTMLButtonElement>): void {
     if (!userName) {
-      alert("Please enter your name!");
+      alert("Please enter your name to login first!");
       return; // Prevent further processing if the user hasn't entered a name
     }
     const text = event.currentTarget.textContent;
@@ -143,7 +143,7 @@ function SpreadSheet({ documentName }: SpreadSheetProps) {
    */
   function onCellClick(event: React.MouseEvent<HTMLButtonElement>): void {
     if (!userName) {
-      alert("Please enter your name!");
+      alert("Please enter your name to login first!");
       return; // Prevent further processing if the user hasn't entered a name
     }
     const cellLabel = event.currentTarget.getAttribute("cell-label");

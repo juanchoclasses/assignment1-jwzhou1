@@ -209,6 +209,10 @@ class SpreadSheetClient {
 
 
     public addToken(token: string): void {
+        if (token === '/') {
+            token = '%2F';
+        }
+     
         const requestAddTokenURL = `${this._baseURL}/document/addtoken/${this._documentName}/${token}`;
         fetch(requestAddTokenURL, {
             method: 'PUT',
@@ -280,7 +284,7 @@ class SpreadSheetClient {
     }
 
     public clearFormula(): void {
-        const requestClearFormulaURL = `${this._baseURL}/document/clear/formula/${this._documentName}`;
+        const requestClearFormulaURL = `${this._baseURL}/document/clearformula/${this._documentName}`;
         fetch(requestClearFormulaURL, {
         method: 'PUT',
         headers: {

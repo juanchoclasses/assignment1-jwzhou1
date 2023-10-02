@@ -1,3 +1,26 @@
+### Your Information
+
+## TODO: Please edit the following information in your assignment
+
+Name: Jiawei Zhou
+
+GitHub Handle: https://github.com/vankhoury/assignment1-jwzhou1.git
+
+- How many hours did it take you to complete this assignment?  
+50 hours
+
+- Did you collaborate or share ideas with any other students/TAs/Professors?  
+Yes, with my teammates.  
+
+- Did you use any external resources?  
+Yes, github Copilot.
+
+
+- (Optional) What was the most interesting part of the assignment? How would you improve this  
+Most interesting is I create a calculator.
+
+
+
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/E_7q5J8A)
 # Getting Started with Create React App
 
