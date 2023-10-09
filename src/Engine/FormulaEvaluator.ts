@@ -197,20 +197,24 @@ export class FormulaEvaluator {
    * @returns [0, ErrorMessages.invalidCell] if the cell formula is empty
    * 
    */
-  getCellValue(token: TokenType): [number, string] {
-    if (token === "") {
-      return [0, ErrorMessages.invalidCell];
-    } else {
-      let cell = this._sheetMemory.getCellByLabel(token);
-      let cellValue = cell.getValue();
-      let cellError = cell.getError();
-      if (cellError !== "") {
-        return [0, cellError];
-      } else {
-        return [cellValue, ""];
-      }
+   getCellValue(token: TokenType): [number, string] {
+    // Retrieve the cell and its formula and error message
+    let cell = this._sheetMemory.getCellByLabel(token);
+    let cellFormula = cell.getFormula();
+    let cellError = cell.getError();
+    // Check if the cell has an error, return 0 with the error message
+    if (cellError !== "" && cellError !== ErrorMessages.emptyFormula) {
+      return [0, cellError];
     }
+    // Check if the cell formula is empty, return 0 with an appropriate error message
+    if (cellFormula.length === 0) {
+      return [0, ErrorMessages.invalidCell];
+    }
+    // Retrieve the cell value and return it along with an empty error message
+    let cellValue = cell.getValue();
+    return [cellValue, ""];
   }
+  
 }
 
 export default FormulaEvaluator;
